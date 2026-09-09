@@ -364,9 +364,11 @@
       const gainedLife = nextLives > lives;
       lives = nextLives;
       livesEl.textContent = String(lives);
-      statusFlash.text = "Power-up: Extra Life +1";
-      statusFlash.until = now + 850;
-      pulseHudValue(livesEl);
+      if (gainedLife) {
+        statusFlash.text = "Power-up: Extra Life +1";
+        statusFlash.until = now + 850;
+        pulseHudValue(livesEl);
+      }
       return gainedLife ? "Extra Life +1" : "";
     }
 
