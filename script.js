@@ -18,6 +18,7 @@
   const coinsEl = document.getElementById("coins");
   const livesEl = document.getElementById("lives");
   const statusBannerEl = document.getElementById("status-banner");
+  const collectibleFeedbackEl = document.getElementById("collectible-feedback");
   const bestScoreEl = document.getElementById("best-score");
   const finalScoreEl = document.getElementById("final-score");
   const finalCoinsEl = document.getElementById("final-coins");
@@ -57,6 +58,10 @@
     magnetUntil: 0,
   };
   const statusFlash = { text: "", until: 0 };
+  const collectibleNotifications = [];
+  let collectibleNotificationActive = false;
+  let coinNotificationCount = 0;
+  let coinNotificationTimer = null;
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
@@ -81,6 +86,7 @@
     gameHeight = rect.height;
     playerX = clamp(playerX, 0, gameWidth - PLAYER_WIDTH);
     drawPlayer();
+    positionCollectibleFeedback();
   }
 
   function drawPlayer() {
@@ -111,6 +117,7 @@
 
   function resetGame() {
     removeAllEntities();
+    clearCollectibleNotifications();
     score = 0;
     coinCount = 0;
     combo = 0;
@@ -177,14 +184,60 @@
     el.classList.add("value-pop");
   }
 
-  function spawnFloatingFeedback(x, y, text, className) {
-    const feedback = document.createElement("div");
-    feedback.className = `floating-feedback ${className}`;
-    feedback.textContent = text;
-    feedback.style.left = `${x}px`;
-    feedback.style.top = `${y}px`;
-    gameEl.appendChild(feedback);
-    feedback.addEventListener("animationend", () => feedback.remove(), { once: true });
+  function positionCollectibleFeedback() {
+    const bannerBottom = statusBannerEl.offsetTop + statusBannerEl.offsetHeight;
+    collectibleFeedbackEl.style.top = `${Math.round(bannerBottom + 8)}px`;
+  }
+
+  function clearCollectibleNotifications() {
+    collectibleNotifications.length = 0;
+    collectibleNotificationActive = false;
+    coinNotificationCount = 0;
+    if (coinNotificationTimer) {
+      clearTimeout(coinNotificationTimer);
+      coinNotificationTimer = null;
+    }
+    collectibleFeedbackEl.replaceChildren();
+  }
+
+  function showNextCollectibleNotification() {
+    if (collectibleNotificationActive || collectibleNotifications.length === 0) {
+      return;
+    }
+    collectibleNotificationActive = true;
+    const notification = collectibleNotifications.shift();
+    const noticeEl = document.createElement("div");
+    noticeEl.className = `collectible-feedback-item ${notification.variant}`;
+    noticeEl.textContent = notification.text;
+    collectibleFeedbackEl.replaceChildren(noticeEl);
+    noticeEl.addEventListener(
+      "animationend",
+      () => {
+        noticeEl.remove();
+        collectibleNotificationActive = false;
+        showNextCollectibleNotification();
+      },
+      { once: true },
+    );
+  }
+
+  function queueCollectibleNotification(text, variant) {
+    collectibleNotifications.push({ text, variant });
+    showNextCollectibleNotification();
+  }
+
+  function queueCoinNotification() {
+    coinNotificationCount += 1;
+    if (coinNotificationTimer) {
+      return;
+    }
+    coinNotificationTimer = setTimeout(() => {
+      const collectedCoins = coinNotificationCount;
+      coinNotificationCount = 0;
+      coinNotificationTimer = null;
+      const coinLabel = collectedCoins === 1 ? "+1 Coin" : `+${collectedCoins} Coins`;
+      queueCollectibleNotification(coinLabel, "coin");
+    }, 160);
   }
 
   function spawnParticles(x, y, color, count = 6) {
@@ -261,7 +314,7 @@
     coinsEl.textContent = String(coinCount);
     pulseHudValue(coinsEl);
     score += 20 * multiplier;
-    spawnFloatingFeedback(centerX, centerY, "+1 Coin", "coin");
+    queueCoinNotification();
     spawnParticles(centerX, centerY, "rgba(255, 214, 94, 0.95)");
   }
 
@@ -307,12 +360,14 @@
   function activatePowerUp(type) {
     const now = performance.now();
     if (type === "life") {
-      lives = Math.min(5, lives + 1);
+      const nextLives = Math.min(5, lives + 1);
+      const gainedLife = nextLives > lives;
+      lives = nextLives;
       livesEl.textContent = String(lives);
       statusFlash.text = "Power-up: Extra Life +1";
       statusFlash.until = now + 850;
       pulseHudValue(livesEl);
-      return;
+      return gainedLife ? "Extra Life +1" : "";
     }
 
     const config = POWER_UP[type];
@@ -325,6 +380,7 @@
     }
 
     updatePowerUpState();
+    return `${config.label} Active`;
   }
 
   function collectPowerUp(index) {
@@ -333,9 +389,12 @@
     const centerY = powerUp.y + powerUp.height / 2;
     powerUp.el.remove();
     powerUps.splice(index, 1);
-    activatePowerUp(powerUp.type);
+    const notificationText = activatePowerUp(powerUp.type);
     score += 12 * multiplier;
-    spawnFloatingFeedback(centerX, centerY, POWER_UP[powerUp.type].label, "power");
+    if (notificationText) {
+      const variant = powerUp.type === "life" ? "life" : "power";
+      queueCollectibleNotification(notificationText, variant);
+    }
     spawnParticles(centerX, centerY, "rgba(156, 247, 255, 0.95)", 8);
   }
 
@@ -534,6 +593,7 @@
   function endGame() {
     gameRunning = false;
     cancelAnimationFrame(animationFrameId);
+    clearCollectibleNotifications();
     gameEl.classList.remove("shield-active", "slowmo-active", "magnet-active");
 
     gameEl.classList.remove("hit");

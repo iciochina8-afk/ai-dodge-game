@@ -181,6 +181,10 @@ body {
   color: var(--muted);
   font-size: 0.8rem;
   padding: 6px 12px;
+  max-width: calc(100% - 20px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   backdrop-filter: blur(4px);
   transition: color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
@@ -210,24 +214,54 @@ body {
   box-shadow: 0 0 0 2px rgba(255, 214, 94, 0.35), 0 8px 18px rgba(255, 206, 67, 0.55);
 }
 
-.floating-feedback {
+.collectible-feedback {
   position: absolute;
-  transform: translate(-50%, -50%);
+  top: 46px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+  padding: 0 12px;
+}
+
+.collectible-feedback-item {
+  border-radius: 999px;
+  border: 1px solid var(--panel-border);
+  background: rgba(10, 14, 28, 0.82);
+  backdrop-filter: blur(4px);
   font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+  max-width: min(100%, 260px);
+  padding: 6px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
   pointer-events: none;
   text-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  animation: floatUp 520ms ease-out forwards;
-  z-index: 2;
+  animation: collectibleNotice 1150ms ease forwards;
 }
 
-.floating-feedback.coin {
+.collectible-feedback-item.coin {
   color: #ffe08a;
+  border-color: rgba(255, 214, 94, 0.45);
+  box-shadow: 0 0 16px rgba(255, 206, 67, 0.24);
 }
 
-.floating-feedback.power {
+.collectible-feedback-item.power {
   color: #a7f8ff;
+  border-color: rgba(136, 243, 255, 0.52);
+  box-shadow: 0 0 16px rgba(136, 243, 255, 0.24);
+}
+
+.collectible-feedback-item.life {
+  color: #ffd3e1;
+  border-color: rgba(255, 123, 162, 0.5);
+  box-shadow: 0 0 16px rgba(255, 123, 162, 0.24);
 }
 
 .particle {
@@ -346,45 +380,50 @@ body {
   100% {
     transform: scale(1);
   }
-
-  @keyframes floatUp {
-    0% {
-      opacity: 0;
-      transform: translate(-50%, -44%) scale(0.88);
-    }
-    20% {
-      opacity: 1;
-    }
-    100% {
-      opacity: 0;
-      transform: translate(-50%, -165%) scale(1.05);
-    }
-  }
-
-  @keyframes particleBurst {
-    0% {
-      opacity: 1;
-      transform: translate(0, 0) scale(1);
-    }
-    100% {
-      opacity: 0;
-      transform: translate(var(--dx), var(--dy)) scale(0.6);
-    }
-  }
-
-  @keyframes valuePop {
-    0% {
-      transform: scale(1);
-    }
-    50% {
-      transform: scale(1.16);
-    }
-    100% {
-      transform: scale(1);
-    }
-  }
   50% {
     transform: scale(1.07);
+  }
+}
+
+@keyframes collectibleNotice {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  16% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.98);
+  }
+}
+
+@keyframes particleBurst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(0.6);
+  }
+}
+
+@keyframes valuePop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.16);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
