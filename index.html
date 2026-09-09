@@ -14,6 +14,18 @@
           <strong id="score">0</strong>
         </div>
         <div class="stat">
+          <span class="label">Combo</span>
+          <strong id="combo">x1</strong>
+        </div>
+        <div class="stat">
+          <span class="label">Coins</span>
+          <strong id="coins">0</strong>
+        </div>
+        <div class="stat">
+          <span class="label">Lives</span>
+          <strong id="lives">1</strong>
+        </div>
+        <div class="stat">
           <span class="label">Best</span>
           <strong id="best-score">0</strong>
         </div>
@@ -22,6 +34,7 @@
       <section class="game-shell">
         <div class="game" id="game" aria-label="Dodge game area">
           <div class="player" id="player" aria-hidden="true"></div>
+          <div class="status-banner" id="status-banner">Power-up: None</div>
         </div>
 
         <div class="overlay" id="start-overlay">
@@ -35,6 +48,7 @@
         <div class="overlay hidden" id="game-over-overlay">
           <h2>Game Over</h2>
           <p>Your score: <strong id="final-score">0</strong></p>
+          <p>Coins collected: <strong id="final-coins">0</strong></p>
           <p>Best score: <strong id="final-best-score">0</strong></p>
           <button id="restart-btn" class="btn">Restart</button>
         </div>
