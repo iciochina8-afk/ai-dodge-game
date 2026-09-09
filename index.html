@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Dodge</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hud" aria-label="Game stats">
+        <div class="stat">
+          <span class="label">Score</span>
+          <strong id="score">0</strong>
+        </div>
+        <div class="stat">
+          <span class="label">Best</span>
+          <strong id="best-score">0</strong>
+        </div>
+      </header>
+
+      <section class="game-shell">
+        <div class="game" id="game" aria-label="Dodge game area">
+          <div class="player" id="player" aria-hidden="true"></div>
+        </div>
+
+        <div class="overlay" id="start-overlay">
+          <h1>Dodge</h1>
+          <p>Move left and right to avoid incoming blocks.</p>
+          <button id="start-btn" class="btn">Start</button>
+          <p class="hint">Keyboard: ← → or A D</p>
+          <p class="hint">Touch: drag on screen</p>
+        </div>
+
+        <div class="overlay hidden" id="game-over-overlay">
+          <h2>Game Over</h2>
+          <p>Your score: <strong id="final-score">0</strong></p>
+          <p>Best score: <strong id="final-best-score">0</strong></p>
+          <button id="restart-btn" class="btn">Restart</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,213 @@
+:root {
+  --bg-1: #111321;
+  --bg-2: #2b1d52;
+  --panel: rgba(255, 255, 255, 0.08);
+  --panel-border: rgba(255, 255, 255, 0.14);
+  --text: #f8f8ff;
+  --muted: #cfd6ff;
+  --accent: #88f3ff;
+  --danger: #ff7a9b;
+  --shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Inter", "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text);
+  background: radial-gradient(circle at 20% -10%, #4d3ca2, transparent 40%),
+    radial-gradient(circle at 90% 15%, #2b5e9f, transparent 45%),
+    linear-gradient(170deg, var(--bg-2), var(--bg-1));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.app {
+  width: min(100%, 420px);
+}
+
+.hud {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.stat {
+  flex: 1;
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+  padding: 10px 14px;
+  box-shadow: var(--shadow);
+}
+
+.label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.stat strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 1.3rem;
+}
+
+.game-shell {
+  position: relative;
+}
+
+.game {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  min-height: 70vh;
+  max-height: 82vh;
+  border-radius: 24px;
+  border: 1px solid var(--panel-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  position: relative;
+  touch-action: none;
+}
+
+.game::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.04) 0,
+    rgba(255, 255, 255, 0.04) 1px,
+    transparent 1px,
+    transparent 42px
+  );
+  pointer-events: none;
+}
+
+.player {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(160deg, #9ff5ff 0%, #4ecbff 55%, #2f87ff 100%);
+  box-shadow: 0 10px 24px rgba(78, 203, 255, 0.55);
+  transition: transform 80ms linear, box-shadow 120ms ease;
+}
+
+.player::after {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.obstacle {
+  position: absolute;
+  border-radius: 10px;
+  background: linear-gradient(160deg, #ff99b4, #ff5d8a);
+  box-shadow: 0 10px 20px rgba(255, 93, 138, 0.45);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 28px;
+  background: rgba(15, 19, 40, 0.84);
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+
+.overlay h1,
+.overlay h2 {
+  margin: 0 0 10px;
+}
+
+.overlay p {
+  margin: 6px 0;
+  color: var(--muted);
+}
+
+.hint {
+  font-size: 0.88rem;
+}
+
+.btn {
+  margin-top: 14px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #9ff5ff, #56a5ff);
+  color: #072148;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: transform 120ms ease, filter 120ms ease;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn:hover {
+  filter: brightness(1.05);
+}
+
+.hidden {
+  display: none;
+}
+
+.game.hit {
+  animation: shake 280ms ease;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-8px);
+  }
+  40% {
+    transform: translateX(8px);
+  }
+  60% {
+    transform: translateX(-5px);
+  }
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+@media (max-width: 420px) {
+  body {
+    padding: 10px;
+  }
+
+  .game {
+    min-height: 72vh;
+  }
+}
