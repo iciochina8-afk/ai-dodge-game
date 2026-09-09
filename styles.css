@@ -191,6 +191,49 @@ body {
   box-shadow: 0 0 18px rgba(136, 243, 255, 0.35);
 }
 
+.collectible-feedback {
+  position: absolute;
+  top: 44px;
+  left: 50%;
+  transform: translate(-50%, -6px);
+  z-index: 1;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(9, 13, 28, 0.86);
+  color: #f2f8ff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 6px 12px;
+  max-width: min(86%, 300px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease, transform 140ms ease, border-color 140ms ease;
+}
+
+.collectible-feedback.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.collectible-feedback.coin {
+  border-color: rgba(255, 218, 123, 0.68);
+  color: #ffe69e;
+}
+
+.collectible-feedback.power {
+  border-color: rgba(136, 243, 255, 0.7);
+  color: #adf8ff;
+}
+
+.collectible-feedback.life {
+  border-color: rgba(255, 143, 173, 0.72);
+  color: #ffd4e2;
+}
+
 .game.shield-active .player {
   box-shadow: 0 0 0 4px rgba(159, 245, 255, 0.42), 0 12px 28px rgba(78, 203, 255, 0.7);
   filter: saturate(1.15);

@@ -18,6 +18,7 @@
   const coinsEl = document.getElementById("coins");
   const livesEl = document.getElementById("lives");
   const statusBannerEl = document.getElementById("status-banner");
+  const collectibleFeedbackEl = document.getElementById("collectible-feedback");
   const bestScoreEl = document.getElementById("best-score");
   const finalScoreEl = document.getElementById("final-score");
   const finalCoinsEl = document.getElementById("final-coins");
@@ -57,6 +58,92 @@
     magnetUntil: 0,
   };
   const statusFlash = { text: "", until: 0 };
+  const collectibleFeedbackQueue = [];
+  let collectibleFeedbackActive = false;
+  let collectibleFeedbackTimer = null;
+  let collectibleFeedbackHideTimer = null;
+  let coinBatchCount = 0;
+  let coinBatchTimer = null;
+  let coinBatchMaxTimer = null;
+
+  function showNextCollectibleFeedback() {
+    if (!collectibleFeedbackEl || collectibleFeedbackActive || collectibleFeedbackQueue.length === 0) {
+      return;
+    }
+
+    const { text, kind } = collectibleFeedbackQueue.shift();
+    collectibleFeedbackActive = true;
+    collectibleFeedbackEl.textContent = text;
+    collectibleFeedbackEl.classList.remove("coin", "power", "life", "show");
+    collectibleFeedbackEl.classList.add(kind, "show");
+
+    collectibleFeedbackTimer = setTimeout(() => {
+      collectibleFeedbackEl.classList.remove("show");
+      collectibleFeedbackHideTimer = setTimeout(() => {
+        collectibleFeedbackActive = false;
+        showNextCollectibleFeedback();
+      }, 140);
+    }, 920);
+  }
+
+  function enqueueCollectibleFeedback(text, kind) {
+    collectibleFeedbackQueue.push({ text, kind });
+    showNextCollectibleFeedback();
+  }
+
+  function flushCoinBatchFeedback() {
+    if (coinBatchTimer) {
+      clearTimeout(coinBatchTimer);
+      coinBatchTimer = null;
+    }
+    if (coinBatchMaxTimer) {
+      clearTimeout(coinBatchMaxTimer);
+      coinBatchMaxTimer = null;
+    }
+    if (coinBatchCount === 0) {
+      return;
+    }
+    const count = coinBatchCount;
+    coinBatchCount = 0;
+    enqueueCollectibleFeedback(`+${count} Coin${count === 1 ? "" : "s"}`, "coin");
+  }
+
+  function queueCoinBatchFeedback() {
+    if (coinBatchCount === 0 && !coinBatchMaxTimer) {
+      coinBatchMaxTimer = setTimeout(flushCoinBatchFeedback, 2000);
+    }
+    coinBatchCount += 1;
+    if (coinBatchTimer) {
+      clearTimeout(coinBatchTimer);
+    }
+    coinBatchTimer = setTimeout(flushCoinBatchFeedback, 1100);
+  }
+
+  function resetCollectibleFeedback() {
+    collectibleFeedbackQueue.length = 0;
+    collectibleFeedbackActive = false;
+    coinBatchCount = 0;
+    if (collectibleFeedbackTimer) {
+      clearTimeout(collectibleFeedbackTimer);
+      collectibleFeedbackTimer = null;
+    }
+    if (collectibleFeedbackHideTimer) {
+      clearTimeout(collectibleFeedbackHideTimer);
+      collectibleFeedbackHideTimer = null;
+    }
+    if (coinBatchTimer) {
+      clearTimeout(coinBatchTimer);
+      coinBatchTimer = null;
+    }
+    if (coinBatchMaxTimer) {
+      clearTimeout(coinBatchMaxTimer);
+      coinBatchMaxTimer = null;
+    }
+    if (collectibleFeedbackEl) {
+      collectibleFeedbackEl.textContent = "";
+      collectibleFeedbackEl.classList.remove("coin", "power", "life", "show");
+    }
+  }
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
@@ -130,6 +217,7 @@
     activePowerUps.magnetUntil = 0;
     statusFlash.text = "";
     statusFlash.until = 0;
+    resetCollectibleFeedback();
 
     syncGameSize();
     playerX = (gameWidth - PLAYER_WIDTH) / 2;
@@ -261,7 +349,7 @@
     coinsEl.textContent = String(coinCount);
     pulseHudValue(coinsEl);
     score += 20 * multiplier;
-    spawnFloatingFeedback(centerX, centerY, "+1 Coin", "coin");
+    queueCoinBatchFeedback();
     spawnParticles(centerX, centerY, "rgba(255, 214, 94, 0.95)");
   }
 
@@ -312,6 +400,7 @@
       statusFlash.text = "Power-up: Extra Life +1";
       statusFlash.until = now + 850;
       pulseHudValue(livesEl);
+      enqueueCollectibleFeedback("Extra Life +1", "life");
       return;
     }
 
@@ -334,8 +423,10 @@
     powerUp.el.remove();
     powerUps.splice(index, 1);
     activatePowerUp(powerUp.type);
+    if (powerUp.type !== "life") {
+      enqueueCollectibleFeedback(POWER_UP[powerUp.type].label, "power");
+    }
     score += 12 * multiplier;
-    spawnFloatingFeedback(centerX, centerY, POWER_UP[powerUp.type].label, "power");
     spawnParticles(centerX, centerY, "rgba(156, 247, 255, 0.95)", 8);
   }
 
