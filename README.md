@@ -31,7 +31,8 @@ A mobile-friendly browser game where you move left and right to avoid falling ob
 - **Power-ups:**  
   - **Shield:** blocks one hit and is consumed on impact.  
   - **Slow Motion:** temporarily slows all falling objects.  
+  - **Coin Magnet:** temporarily attracts nearby coins toward the player.  
   - **Extra Life:** adds one life immediately.
-- **Visual feedback:** active power-ups are shown with an in-game status banner and visual effects.
+- **Visual feedback:** coin and power-up pickups trigger floating text, particles, HUD pops, and active power-up timers in the status banner.
 - **Game over state:** shows final score, coins collected, and best score.
 - **Persistence:** best score is saved automatically in your browser using `localStorage`.
