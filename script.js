@@ -7,6 +7,7 @@
   const POWER_UP = {
     shield: { label: "Shield", durationMs: 5500 },
     slowmo: { label: "Slow Motion", durationMs: 4500 },
+    magnet: { label: "Coin Magnet", durationMs: 5200 },
     life: { label: "Extra Life", durationMs: 0 },
   };
 
@@ -53,10 +54,21 @@
   const activePowerUps = {
     shieldUntil: 0,
     slowmoUntil: 0,
+    magnetUntil: 0,
   };
+  const statusFlash = { text: "", until: 0 };
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
+  }
+
+  function expandRect(rect, padding) {
+    return {
+      x: rect.x - padding,
+      y: rect.y - padding,
+      width: rect.width + padding * 2,
+      height: rect.height + padding * 2,
+    };
   }
 
   function updateBestScoreDisplay() {
@@ -115,6 +127,9 @@
     powerUpSpawnTimer = 0;
     activePowerUps.shieldUntil = 0;
     activePowerUps.slowmoUntil = 0;
+    activePowerUps.magnetUntil = 0;
+    statusFlash.text = "";
+    statusFlash.until = 0;
 
     syncGameSize();
     playerX = (gameWidth - PLAYER_WIDTH) / 2;
@@ -156,6 +171,40 @@
     return { el, x, y, width, height, speed };
   }
 
+  function pulseHudValue(el) {
+    el.classList.remove("value-pop");
+    void el.offsetWidth;
+    el.classList.add("value-pop");
+  }
+
+  function spawnFloatingFeedback(x, y, text, className) {
+    const feedback = document.createElement("div");
+    feedback.className = `floating-feedback ${className}`;
+    feedback.textContent = text;
+    feedback.style.left = `${x}px`;
+    feedback.style.top = `${y}px`;
+    gameEl.appendChild(feedback);
+    feedback.addEventListener("animationend", () => feedback.remove(), { once: true });
+  }
+
+  function spawnParticles(x, y, color, count = 6) {
+    for (let i = 0; i < count; i++) {
+      const particle = document.createElement("span");
+      particle.className = "particle";
+      particle.style.left = `${x}px`;
+      particle.style.top = `${y}px`;
+      particle.style.background = color;
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 12 + Math.random() * 24;
+      const dx = Math.cos(angle) * distance;
+      const dy = Math.sin(angle) * distance - 8;
+      particle.style.setProperty("--dx", `${dx}px`);
+      particle.style.setProperty("--dy", `${dy}px`);
+      gameEl.appendChild(particle);
+      particle.addEventListener("animationend", () => particle.remove(), { once: true });
+    }
+  }
+
   function spawnObstacle() {
     const difficulty = getDifficulty();
     const width = 24 + Math.random() * 44;
@@ -172,13 +221,20 @@
   }
 
   function spawnPowerUp() {
-    const typePool = ["shield", "slowmo", "life"];
+    const typePool = ["shield", "slowmo", "magnet", "life"];
     const type = typePool[Math.floor(Math.random() * typePool.length)];
     const size = 22;
     const difficulty = getDifficulty();
     const speed = difficulty.coinSpeedBase + 20;
+    const iconByType = {
+      shield: "🛡",
+      slowmo: "⏳",
+      magnet: "🧲",
+      life: "❤",
+    };
 
     const entity = makeFallingEntity(`power-up ${type}`, size, size, speed);
+    entity.el.setAttribute("data-icon", iconByType[type] || "★");
     powerUps.push({ ...entity, type });
   }
 
@@ -197,11 +253,16 @@
 
   function collectCoin(index) {
     const coin = coins[index];
+    const centerX = coin.x + coin.width / 2;
+    const centerY = coin.y + coin.height / 2;
     coin.el.remove();
     coins.splice(index, 1);
     coinCount += 1;
     coinsEl.textContent = String(coinCount);
+    pulseHudValue(coinsEl);
     score += 20 * multiplier;
+    spawnFloatingFeedback(centerX, centerY, "+1 Coin", "coin");
+    spawnParticles(centerX, centerY, "rgba(255, 214, 94, 0.95)");
   }
 
   function setStatusBanner(label) {
@@ -212,24 +273,29 @@
     const now = performance.now();
     const shieldActive = activePowerUps.shieldUntil > now;
     const slowmoActive = activePowerUps.slowmoUntil > now;
+    const magnetActive = activePowerUps.magnetUntil > now;
 
     gameEl.classList.toggle("shield-active", shieldActive);
     gameEl.classList.toggle("slowmo-active", slowmoActive);
+    gameEl.classList.toggle("magnet-active", magnetActive);
 
-    if (shieldActive && slowmoActive) {
-      setStatusBanner("Power-ups: Shield + Slow Motion");
-      statusBannerEl.classList.add("active");
-      return;
-    }
-
+    const activeEntries = [];
     if (shieldActive) {
-      setStatusBanner("Power-up: Shield active");
+      activeEntries.push(`${POWER_UP.shield.label} ${((activePowerUps.shieldUntil - now) / 1000).toFixed(1)}s`);
+    }
+    if (slowmoActive) {
+      activeEntries.push(`${POWER_UP.slowmo.label} ${((activePowerUps.slowmoUntil - now) / 1000).toFixed(1)}s`);
+    }
+    if (magnetActive) {
+      activeEntries.push(`${POWER_UP.magnet.label} ${((activePowerUps.magnetUntil - now) / 1000).toFixed(1)}s`);
+    }
+    if (activeEntries.length > 0) {
+      setStatusBanner(`Power-up: ${activeEntries.join(" • ")}`);
       statusBannerEl.classList.add("active");
       return;
     }
-
-    if (slowmoActive) {
-      setStatusBanner("Power-up: Slow Motion active");
+    if (statusFlash.until > now) {
+      setStatusBanner(statusFlash.text);
       statusBannerEl.classList.add("active");
       return;
     }
@@ -243,14 +309,9 @@
     if (type === "life") {
       lives = Math.min(5, lives + 1);
       livesEl.textContent = String(lives);
-      setStatusBanner("Power-up: Extra Life gained");
-      statusBannerEl.classList.add("active");
-      window.setTimeout(() => {
-        if (!gameRunning) {
-          return;
-        }
-        updatePowerUpState();
-      }, 700);
+      statusFlash.text = "Power-up: Extra Life +1";
+      statusFlash.until = now + 850;
+      pulseHudValue(livesEl);
       return;
     }
 
@@ -258,13 +319,9 @@
     if (!config) {
       return;
     }
-
-    if (type === "shield") {
-      activePowerUps.shieldUntil = Math.max(activePowerUps.shieldUntil, now) + config.durationMs;
-    }
-
-    if (type === "slowmo") {
-      activePowerUps.slowmoUntil = Math.max(activePowerUps.slowmoUntil, now) + config.durationMs;
+    const untilKey = `${type}Until`;
+    if (Object.prototype.hasOwnProperty.call(activePowerUps, untilKey)) {
+      activePowerUps[untilKey] = Math.max(activePowerUps[untilKey], now) + config.durationMs;
     }
 
     updatePowerUpState();
@@ -272,10 +329,14 @@
 
   function collectPowerUp(index) {
     const powerUp = powerUps[index];
+    const centerX = powerUp.x + powerUp.width / 2;
+    const centerY = powerUp.y + powerUp.height / 2;
     powerUp.el.remove();
     powerUps.splice(index, 1);
     activatePowerUp(powerUp.type);
     score += 12 * multiplier;
+    spawnFloatingFeedback(centerX, centerY, POWER_UP[powerUp.type].label, "power");
+    spawnParticles(centerX, centerY, "rgba(156, 247, 255, 0.95)", 8);
   }
 
   function consumeLifeOnHit() {
@@ -357,13 +418,31 @@
 
   function updateCoins(deltaSec, worldScale) {
     const playerRect = getPlayerRect();
+    const magnetActive = activePowerUps.magnetUntil > performance.now();
+    const playerCenterX = playerRect.x + playerRect.width / 2;
+    const playerCenterY = playerRect.y + playerRect.height / 2;
+    const magnetRadius = Math.min(gameWidth, gameHeight) * 0.34;
 
     for (let i = coins.length - 1; i >= 0; i--) {
       const coin = coins[i];
       coin.y += coin.speed * deltaSec * worldScale;
+      if (magnetActive) {
+        const coinCenterX = coin.x + coin.width / 2;
+        const coinCenterY = coin.y + coin.height / 2;
+        const dx = playerCenterX - coinCenterX;
+        const dy = playerCenterY - coinCenterY;
+        const distance = Math.hypot(dx, dy);
+        if (distance < magnetRadius) {
+          const pull = (1 - distance / magnetRadius) * 620 * deltaSec;
+          const norm = distance || 1;
+          coin.x = clamp(coin.x + (dx / norm) * pull, 0, gameWidth - coin.width);
+          coin.y += (dy / norm) * pull;
+        }
+      }
+      coin.el.style.left = `${coin.x}px`;
       coin.el.style.top = `${coin.y}px`;
 
-      if (intersects(playerRect, coin)) {
+      if (intersects(expandRect(playerRect, 4), expandRect(coin, 2))) {
         collectCoin(i);
         continue;
       }
@@ -376,7 +455,7 @@
   }
 
   function updatePowerUps(deltaSec, worldScale) {
-    const playerRect = getPlayerRect();
+    const playerRect = expandRect(getPlayerRect(), 2);
 
     for (let i = powerUps.length - 1; i >= 0; i--) {
       const powerUp = powerUps[i];
@@ -455,7 +534,7 @@
   function endGame() {
     gameRunning = false;
     cancelAnimationFrame(animationFrameId);
-    gameEl.classList.remove("shield-active", "slowmo-active");
+    gameEl.classList.remove("shield-active", "slowmo-active", "magnet-active");
 
     gameEl.classList.remove("hit");
     void gameEl.offsetWidth;
