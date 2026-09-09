@@ -2,7 +2,12 @@
 
 A mobile-friendly browser game where you move left and right to avoid falling obstacles.
 
-## How to play
+## Play online (GitHub Pages)
+
+- URL: https://iciochina8-afk.github.io/ai-dodge-game/
+- The site deploys automatically from the `main` branch via GitHub Actions.
+
+## How to play locally
 
 1. Open `/home/runner/work/ai-dodge-game/ai-dodge-game/index.html` in any modern browser.
 2. Tap **Start**.
